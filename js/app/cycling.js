@@ -1,3 +1,5 @@
+
+
 function loadRide(csv){
 
             props = definePlotProps();
@@ -5,6 +7,7 @@ function loadRide(csv){
             csv.forEach(function (row, index) {
               row.dst = row.dst / 1609;  // distance in miles
               row.alt = row.alt * 3.28;  // elevation in feet
+
               row.cad = +row.cad; // cadence in RPM
               row.pwr = +row.pwr; // power in watts
               row.hrt = +row.hrt; // heart rate in bpm
@@ -17,7 +20,7 @@ function loadRide(csv){
 
             rideData_ = [];
 
-            var SUBSAMPLE_RATE = 10;
+            var SUBSAMPLE_RATE = 5;
 
             for (i = 0; i < rideData.length; i = i + SUBSAMPLE_RATE) {
               rideData_.push(rideData[i]);
@@ -49,13 +52,12 @@ function loadRide(csv){
 
           var map = L.map('ride-map');
 
-          //add a tile layer to add to our map, in this case it's the 'standard' OpenStreetMap.org tile server
           L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
           maxZoom: 18
           }).addTo(map);
 
-          map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text. Attribution overload
+          map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text
 
           // var berkeley = new L.LatLng(37.8, -122.3); // geographical point (longitude and latitude)
           // map.setView(berkeley, 13);
@@ -149,10 +151,12 @@ function loadRide(csv){
           ds = sec[1] - sec[0];
 
           for (i = 1; i < sec.length; i++) {
+
             altChange = alt[i] - alt[i-1];
             altChange = altChange < 0 ? 0 : altChange;
+
             elg.push( elg[i-1] + altChange );
-            vam.push( 3600 * altChange/3.28/ds);
+            vam.push( 3600 * altChange/3.28/ds );
           }
 
           rideData.elg = elg;
