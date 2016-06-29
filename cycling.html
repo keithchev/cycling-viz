@@ -1,0 +1,133 @@
+<html>
+    <title>Cycling data analysis with d3</title>
+    <link rel="icon"          href="../favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="./css/style.cycling.css" > 
+    <link rel="stylesheet" href="./js/components/leaflet/leaflet.css" />
+
+    <body>
+      
+      <div id="header">
+        <div id="title">
+          <span>Cycling (through) data</span>
+        </div> 
+        <div id="tagline-left">
+            <span></span>
+        </div>
+
+        <div id="tagline-right">
+            <span> A visualization by <a href="http://keithcheveralls.org">Keith Cheveralls</a></span>
+        </div>
+      </div>
+
+      <div id="main-container" style="width:1200px; padding-left: 30px;">
+
+        <div id="left-container" style="width:300px; margin-left: 10px;">
+
+            <div id="info" style="width: 300px; height: 170px; margin-top: 5px;">
+              <div style="width: 250px;">
+                <p>Hints:<br>
+                 Zoom in by brushing the elevation plot<br>
+                 Hover over the 1D plots to see a trailing history in the 2D plot
+               </p>
+             </div>
+                <table>
+                <tr><td> Distance:        </td> <td class="td-info" id="info-distance"></td></tr>
+                <tr><td> Moving time:     </td> <td class="td-info" id="info-time"></td></tr>
+                <tr><td> Elevation gain:  </td> <td class="td-info" id="info-elevation-gain"></td></tr>
+                </table><br><br>
+            </div>
+
+            <div id="buttons" style="width: 100px;">
+
+                <button id="button-x-axis">Toggle x-axis</button>
+                <div class="button-spacer" style="height: 15px;"></div>
+                
+                <form>
+                  <label>Window (s): </label>
+                  <input type="number" value="5" id="text-smoothing-window">
+                </form>
+                <div class="button-spacer"></div>
+
+                <button id="button-smoothing"> Smooth </button>
+                <div class="button-spacer" style="height: 20px;"></div>
+
+            </div>
+
+            <div id="ride-map" style="width: 270px; height: 230px;"></div>
+
+        </div>
+ 
+        <div id="plot-container" style="width: 800px;">
+
+            <div class="plot-title">
+              <div id="alt-title" class="plot-title-value"></div>
+              <div class="plot-title-units">feet</div>
+            </div>
+            <div id="alt-plot"></div> 
+            <div class="spacer"></div>
+
+            <div class="plot-title">
+              <div id="spd-title" class="plot-title-value"></div>
+              <div class="plot-title-units">mph</div>
+            </div>
+            <div id="spd-plot" class="line-plot"></div>
+            <div class="spacer"></div>    
+
+            <div class="plot-title">
+              <div id="pwr-title" class="plot-title-value"></div>
+              <div class="plot-title-units">watts</div>
+            </div>
+            <div id="pwr-plot" class="line-plot"></div>
+            <div class="spacer"></div>
+
+            <div class="plot-title">
+              <div id="hrt-title" class="plot-title-value"></div>
+              <div class="plot-title-units">bpm</div>
+            </div>
+            <div id="hrt-plot" class="line-plot"></div>
+            <div class="spacer"></div>
+
+            <div class="plot-title">
+              <div id="cad-title" class="plot-title-value"></div>
+              <div class="plot-title-units">rpm</div>
+            </div>
+            <div id="cad-plot" class="line-plot"></div>
+            <div class="spacer"></div>
+
+            <div class="plot-title">
+              <div id="vam-title" class="plot-title-value"></div>
+              <div class="plot-title-units">VAM</div>
+            </div>
+            <div id="vam-plot" class="line-plot"></div>
+            <div class="spacer"></div>
+
+            <div style="height: 20px; width: 100%;"></div>
+
+            <div class="plot-title"></div>
+            <div id="plot-2d" class="scatter-plot"></div>
+            <div class="spacer"></div>
+
+        </div>
+      </div>
+
+
+      <div style="clear: both;"></div>
+
+    <script src="./js/components/d3/d3.v3.min.js"></script>
+    <script src="./js/components/d3/cubehelix.min.js"></script>
+    <script src="http://d3js.org/queue.v1.min.js"></script>
+    <script src="./js/components/leaflet/leaflet.js"></script>
+
+    <script src="./js/app/cycling.js"></script>
+
+    <script>
+
+        d3.csv("./tcx/activity_1226372288_PH-loop_interpolate-crop.csv", function (error, csv) { loadRide(csv); });
+
+    </script>
+  </body>
+</html>
+
+

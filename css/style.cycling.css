@@ -1,0 +1,222 @@
+body {
+	margin: 0px;
+	padding: 0px;
+	right: auto;
+}
+
+div { float: left; }
+
+#header { white-space: nowrap; }
+
+button {
+	width: 100px;
+	height: auto;
+	margin: 0px;
+	padding: 0px;
+}
+
+#text-smoothing-window {
+	width:35px;
+	height: 20px;
+	font-family: arial;
+	font-size: 11px;
+}
+
+form {
+	height: 25px; 
+margin: 0px; 
+margin-bottom: 10px;
+padding: 0px; }
+
+
+label {
+	font-family: arial;
+	font-size: 11px;
+	height: 20px;}
+
+.button-spacer {
+	height: 5px;
+	width: 100px;
+}
+
+.spacer { clear: both;}
+
+.plot-title {
+	font-family: arial;
+	font-size: 12px;
+	height: 50px;
+	width: 50px;
+	margin-top: 15px;
+	vertical-align: center;
+}
+
+.plot-title-value {
+	clear: both;
+	text-align: center;
+	font-size: 20px;
+	font-weight: bold;
+}
+
+.plot-title-units {
+	clear: both;
+	font-size: 14px;
+	text-align: center;
+}
+
+.line-plot {
+	display: inline-block;  			
+	padding: 0px;
+	background-color: #fff;
+	border: 1px solid #fff;
+}
+
+.scatter-plot {
+	display: inline-block;  			
+	padding: 0px;
+	background-color: #fff;
+	border: 1px solid #fff;
+}
+
+.line-plot-path {
+	clip-path: url(#clip);
+}
+
+#alt-plot {
+	padding: 0px;
+	border: 1px solid #fff;
+}
+
+.plot-spacer {
+	width:100%; 
+	height:10px;
+}
+
+
+
+
+.svg-default {
+	background-color: #fff;
+}
+
+.axis path, .axis line {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}
+
+path.mouse-position-path {
+	fill: none;
+	stroke: #000;
+	stroke-width: 1;
+	shape-rendering: crispEdges;
+}
+
+path {
+	shape-rendering: auto;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+	font-family: sans-serif;
+	font-size: 10px;
+	fill: #000;
+}
+
+.axis-label {
+	font-family: sans-serif;
+	font-size: 10px;
+	fill: #000;
+}
+
+td {
+	font-family: sans-serif;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+p {font-family: sans-serif;
+font-size: 12px;}
+
+.td-info { font-weight: normal; }
+
+a:hover{
+	color: #b0c4de;
+	text-decoration: none;
+}
+
+a:visited {
+	color: #4682b4;
+	text-decoration: none;
+}
+
+a {
+	color: #4682b4;
+	text-decoration: none;
+}
+
+
+
+
+#title {
+	position: relative;
+	font-family: sans-serif;
+	font-size: 30px;
+	padding: 0px;
+	padding-left:30px;
+	padding-top:10px;
+	padding-bottom:10px;
+	width: 250px;
+	height: 40px;
+	float: left;
+
+}
+
+#title span {
+	position: absolute;
+	bottom: 10px;
+	left: 30px;
+}
+
+#tagline-left {
+	position: relative; /* this is necessary to position the span (see below) */
+	font-family: sans-serif;
+	font-size: 14px;
+	padding: 0px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	width: 10px;
+	height: 40px;
+	font-weight: bold;
+}
+
+/* the tagline is wrapped in a span with absolute positioning 
+to force the text to the bottom of the div */
+#tagline-left span {
+	position: absolute; 
+	bottom: 12px;       /*adjust so that the tagline is level with the title*/
+	left: 0;
+}
+
+#tagline-right {
+	position: relative; 
+	font-family: sans-serif;
+	font-size: 16px;
+	padding: 0px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	width: 320px; /* adjust until right-justification is roughly correct */
+	height: 40px;
+	font-weight: bold;
+	display: inline-block;
+}
+
+#tagline-right span {
+	position: absolute; 
+	bottom: 12px;
+	right: 0;
+}
