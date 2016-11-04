@@ -5,7 +5,7 @@ By [Keith Cheveralls](http://kchev.org/) <tt>&lt;[keith.chev@gmail.com](mailto:k
 May 2016<br>
 See the live version [here](https://keithchev.github.io/cycling-viz/cycling.html) or click below. 
 
-<a href="http://kchev.org/cycling/img/screenshot.PNG"><img width="600px" src="http://kchev.org/cycling/img/screenshot.PNG" alt="screenshot"></a>
+<a href="https://keithchev.github.io/cycling-viz/cycling.html"><img width="600px" src="http://kchev.org/cycling/img/screenshot.PNG" alt="screenshot"></a>
 
 ## Introduction
 This is a relatively simple interactive visualization of data collected from a GPS cycling computer during a single bike ride.
