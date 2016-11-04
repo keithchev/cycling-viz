@@ -3,9 +3,9 @@ GPS Cycling data visualization
 
 By [Keith Cheveralls](http://kchev.org/) <tt>&lt;[keith.chev@gmail.com](mailto:keith.chev@gmail.com)&gt;</tt><br>
 May 2016<br>
-See the [live version](https://keithchev.github.io/cycling-viz/cycling.html)
+See the live version [here](https://keithchev.github.io/cycling-viz/cycling.html) or click below. 
 
-<img src="cycling-viz/img/screenshot.PNG" alt="screenshot">
+<a href="http://kchev.org/cycling/img/screenshot.PNG"><img width="600px" src="http://kchev.org/cycling/img/screenshot.PNG" alt="screenshot"></a>
 
 ## Introduction
 This is a relatively simple interactive visualization of data collected from a GPS cycling computer during a single bike ride.
