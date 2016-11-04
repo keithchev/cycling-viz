@@ -5,6 +5,8 @@ By [Keith Cheveralls](http://kchev.org/) <tt>&lt;[keith.chev@gmail.com](mailto:k
 May 2016<br>
 See the [live version](https://keithchev.github.io/cycling-viz/cycling.html)
 
+<img src="cycling-viz/img/screenshot.PNG" alt="screenshot">
+
 ## Introduction
 This is a relatively simple interactive visualization of data collected from a GPS cycling computer during a single bike ride.
 This data consists of a set of time series, each corresponding to the values of a particular cycling parameter over the course of the ride. These parameters include lat/lon position coordinates, speed, elevation, power output (measured using a power meter), pedaling cadence, and heart rate. 
