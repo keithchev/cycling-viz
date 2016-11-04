@@ -1,5 +1,3 @@
-
-
 function loadRide(csv){
 
             props = definePlotProps();
@@ -14,6 +12,7 @@ function loadRide(csv){
               row.sec = +row.sec; // elapsed time in seconds
               row.lat = +row.lat;
               row.lon = +row.lon;
+
             });
 
             rideData = csv;
@@ -38,8 +37,6 @@ function loadRide(csv){
             // somehow, doLinePlot can modify map and mouseMarker - figure this out
             
             makePlots(rideData, props);
-
-            
         }
 
         function initMap(rideData) {
@@ -75,6 +72,8 @@ function loadRide(csv){
              };
 
           var polyline = new L.Polyline(ridePoints, lineOptions);
+
+          debugger;
 
           map.addLayer(polyline);      
 
@@ -119,6 +118,27 @@ function loadRide(csv){
           return dict;
         }
 
+        function calcMeanOverDomain(rideData, field, domain) {
+
+          rideData = listOfDictsToDictOfLists(rideData);
+
+          sec = rideData.sec;
+
+          range = [];
+
+          for (n = 0; n < domain.length; n++) {
+            dists = [];
+            for (i = 0; i < sec.length; i++) {
+              dists.push( Math.abs(sec[i] - domain[n]) );
+            }
+            range.push(dists.indexOf(Math.min.apply(Math, dists)));
+          }
+
+          fieldData = rideData[field].slice(range[0], range[1]);
+
+          return fieldData.reduce(function(x1, x2) { return x1 + x2; }) / fieldData.length;
+        }
+
         function calcRawSpd(rideData) {
 
           rideData = listOfDictsToDictOfLists(rideData);
@@ -132,11 +152,9 @@ function loadRide(csv){
           }
 
           rideData.spd = spd;
-
           rideData = dictOfListsToListOfDicts(rideData);
 
           return rideData;
-
         }
 
         function calcElevationGain(rideData) {
@@ -145,30 +163,39 @@ function loadRide(csv){
 
           sec = rideData.sec;
           alt = rideData.alt;
+          dst = rideData.dst;
           elg = [0];
           vam = [0];
+          slp = [0];
 
-          ds = sec[1] - sec[0];
+          dsec = sec[1] - sec[0];
 
           for (i = 1; i < sec.length; i++) {
 
-            altChange = alt[i] - alt[i-1];
-            altChange = altChange < 0 ? 0 : altChange;
+            dAlt = alt[i] - alt[i-1];
+            // dAlt = dAlt < 0 ? 0 : dAlt;
 
-            elg.push( elg[i-1] + altChange );
-            vam.push( 3600 * altChange/3.28/ds );
+            dDst = dst[i] - dst[i-1];
+
+
+            elg.push( elg[i-1] + dAlt );
+            vam.push( 3600 * dAlt/3.28/dsec ); // in meters per hour
+
+            if ( dDst == 0 ) {
+              slp.push(0);
+            } else {
+              slp.push( 100*(alt[i] - alt[i-1]) / (dDst * 5280) );
+            }
           }
 
           rideData.elg = elg;
           rideData.vam = vam;
+          rideData.slp = slp;
 
           rideData = dictOfListsToListOfDicts(rideData);
 
           return rideData;
-
         }
-
-
 
         function smoothRide(rideData, windowSize) {
           // simple moving-average of ride data (might be slow)
@@ -176,10 +203,8 @@ function loadRide(csv){
           rideData = listOfDictsToDictOfLists(rideData);
 
           var datafield, datafieldMA, windowSum;
-
           var rideDataMA = {};
           var numPoints = rideData.sec.length;
-
           var keys = Object.keys(rideData);
 
           for (ind in keys) {
@@ -203,15 +228,10 @@ function loadRide(csv){
 
               if (isNaN(windowSum)){ datafieldMA[i] = datafield[i]; }
             }
-
             rideDataMA[key] = datafieldMA;
-
           }
-
           return dictOfListsToListOfDicts(rideDataMA);
-
         }
-
 
         function displayInfo(rideData) {
 
@@ -223,48 +243,68 @@ function loadRide(csv){
           numHours = Math.floor(rideData.sec[rideData.sec.length-1]/3600);
           numMins  = Math.round(-(numHours * 3600 - rideData.sec[rideData.sec.length-1]) / 60);
 
-          d3.select("#info-time")
-          .text(numHours + 'h ' + numMins + 'm');
+          d3.select("#info-time").text(numHours + 'h ' + numMins + 'm');
         }
 
         function makePlots(rideData, props) {
-
-          // this works, but fails if corrected so that this function is called when the smoothing button is clicked - means re-plotting doesn't work
-          // this is partially because makeAltPlot doesn't check to see if there's svg in the div
           
-            var windowSize = +document.getElementById("text-smoothing-window").value;
+          var windowSize = +document.getElementById("text-smoothing-window").value;
 
-            rideData = smoothRide(rideData, windowSize);
-            rideData = calcElevationGain(rideData);
+          var fields = ['spd', 'pwr', 'hrt', 'cad', 'vam', 'slp'];
 
-            d3.select("#info-elevation-gain").text(Math.round(rideData[rideData.length-1].elg) + ' ft');
-          
+          var fields2d = [ ['pwr', 'spd'], ['hrt', 'spd'], ['cad', 'spd'], ['vam', 'spd'], ['slp', 'spd'],
+                           ['pwr', 'hrt'], ['hrt', 'cad'], ['cad', 'vam'], ['vam', 'slp'], ['',''],       
+                           ['pwr', 'cad'], ['hrt', 'vam'], ['cad', 'slp'], ['',''],        ['',''],                           
+                           ['pwr', 'vam'], ['hrt', 'slp'], ['',''],        ['',''],        ['',''],
+                           ['pwr', 'slp'], ['',''],        ['',''],        ['',''],        ['',''], ]; 
 
-          var linePlots = [
-              makeLinePlot().field('spd'),
-              makeLinePlot().field('pwr'),
-              makeLinePlot().field('hrt'),
-              makeLinePlot().field('cad'),
-              makeLinePlot().field('vam'),
-          ];
 
-          d3.selectAll(".line-plot")
+           fields2d = [ ['hrt', 'pwr'], ['pwr', 'spd'], ['pwr', 'vam'], ['cad', 'spd'], ['slp', 'spd'], ['slp', 'vam'],];
+
+          rideData = smoothRide(rideData, windowSize);
+          rideData = calcElevationGain(rideData);
+
+          d3.select("#info-elevation-gain").text(Math.round(rideData[rideData.length-1].elg) + ' ft');
+
+          var linePlots = [];
+          fields.forEach( function(field) {linePlots.push(makeLinePlot().field(field));} );
+
+          d3.select("#plots-1d-container")
+            .selectAll("div")
+            .data(linePlots)
+            .enter().append("div")
+            .attr("class", "line-plot-container");
+
+          d3.selectAll(".line-plot-container")
             .data(linePlots)
             .each(function (linePlot) { d3.select(this).call(linePlot); });
 
+
+          var scatterPlots = [];
+          fields2d.forEach( function(field2d) {scatterPlots.push(makeScatterPlot().field(field2d));} );
+
+          d3.select("#plots-2d-container")
+            .selectAll("div")
+            .data(scatterPlots)
+            .enter().append("div")
+            .attr("class", "scatter-plot-container");
+
+          d3.selectAll(".scatter-plot-container")
+            .data(scatterPlots)
+            .each(function (scatterPlot) {d3.select(this).call(scatterPlot); });
+
           makeAltPlot(rideData);
-
-          make2DPlot(rideData);
-
+          
+          }
 
         function makeAltPlot(rideData) {
 
           props.padB = 20;
-          props.plotHeight = 80;
+          props.linePlotHeight = 80;
 
           var div = d3.select("#alt-plot")
-                  .attr("height", props.plotHeight + props.padB + props.padB)
-                  .attr("width", props.plotWidth + props.padL + props.padR);
+                  .attr("height", props.linePlotHeight + props.padB + props.padB)
+                  .attr("width", props.linePlotWidth + props.padL + props.padR);
 
           var svg = div.select("svg");
           var firstCall = 0;
@@ -273,8 +313,8 @@ function loadRide(csv){
 
           if (firstCall) {
             svg = div.append("svg")
-                .attr("height", props.plotHeight + props.padB + props.padB)
-                .attr("width", props.plotWidth + props.padL + props.padR)
+                .attr("height", props.linePlotHeight + props.padB + props.padB)
+                .attr("width", props.linePlotWidth + props.padL + props.padR)
                 .attr("class", "svg-default");
 
             var altPlot = svg.append("g")
@@ -283,7 +323,7 @@ function loadRide(csv){
             altPlot.append("g")
                 .attr("class", "axis")
                 .attr("id", "x-axis")
-                .attr("transform", "translate(0," + (props.plotHeight) + ")");
+                .attr("transform", "translate(0," + (props.linePlotHeight) + ")");
 
             altPlot.append("g")
                  .attr("class", "axis")
@@ -291,12 +331,10 @@ function loadRide(csv){
               
             altPlot.append("path").attr("id", "alt-area");
 
-          } else {
-            var altPlot = svg.select("g");
-          }
+          } else { var altPlot = svg.select("g"); }
 
           var XScale = d3.scale.linear()
-                          .range( [0, props.plotWidth])
+                          .range( [0, props.linePlotWidth])
                           .domain([0, rideData[rideData.length-1].sec]);
 
           var nSec = rideData[rideData.length-1].sec,
@@ -318,14 +356,14 @@ function loadRide(csv){
           var YScaleAlt = d3.scale.linear()
                                   .domain([ d3.min(rideData, function(d) { return d.alt; }),
                                             d3.max(rideData, function(d) { return d.alt; }) ])
-                                  .range([props.plotHeight, 0]);
+                                  .range([props.linePlotHeight, 0]);
 
           var areaAlt = d3.svg.area()
                               .x(  function(d) { return XScale(d.sec); })
                               .y1( function(d) { return YScaleAlt(d.alt); })
-                              .y0( props.plotHeight );
+                              .y0( props.linePlotHeight );
 
-          var YAxisAlt  = d3.svg.axis().scale(YScaleAlt).orient("left");
+          var YAxisAlt  = d3.svg.axis().scale(YScaleAlt).orient("left").ticks(5);
 
           altPlot.select("#y-axis").call(YAxisAlt);
 
@@ -337,7 +375,7 @@ function loadRide(csv){
                     .call(brush)
                     .selectAll("rect")
                     .attr("y", 0)
-                    .attr("height", props.plotHeight);
+                    .attr("height", props.linePlotHeight);
           } else {
             altPlot.select(".brush").call(brush);
           }
@@ -362,7 +400,6 @@ function loadRide(csv){
             if (s) { time = time + s; }
 
             return time;
-
           }
 
 
@@ -370,7 +407,7 @@ function loadRide(csv){
 
             var domain = brush.empty() ? XScale.domain() : brush.extent();
 
-            d3.selectAll(".line-plot").each(function (linePlot) { 
+            d3.selectAll(".line-plot-container").each(function (linePlot) { 
                   d3.select(this).call(linePlot.XDomain(domain)); });
           }
         }
@@ -379,17 +416,22 @@ function loadRide(csv){
 
           props = definePlotProps();
 
+          rideData = calcElevationGain(rideData);
+
+
           var field, smoothing = 0, XDomain = [],
 
-              N = rideData.length,
+          N = rideData.length,
 
-              XScale = d3.scale.linear().range([ 0, props.plotWidth ]),
-              YScale = d3.scale.linear().range([ props.plotHeight, 0 ]),
+          XScale = d3.scale.linear().range([ 0, props.linePlotWidth ]),
+          YScale = d3.scale.linear().range([ props.linePlotHeight, 0 ]),
 
-              line = d3.svg.line().x(function(d) { return XScale(d.sec); }).interpolate("linear"),
+          line = d3.svg.line().x(function(d) { return XScale(d.sec); }).interpolate("linear"),
 
-              YAxis = d3.svg.axis().scale(YScale).orient("left").ticks(2),
-              XAxis = d3.svg.axis().scale(XScale).orient("bottom");
+          YAxis = d3.svg.axis().scale(YScale).orient("left"),
+          XAxis = d3.svg.axis().scale(XScale).orient("bottom");
+
+          var meanLine = d3.svg.line().x(function(d) { return d.x; }).y(function(d) { return d.y; }).interpolate("linear");
 
           function linePlot(div) {
 
@@ -397,46 +439,43 @@ function loadRide(csv){
 
             if (svg.empty()) {
 
-              svg = div.append("svg")
-                       .attr("height", props.plotHeight + props.padB + props.padB)
-                       .attr("width", props.plotWidth + props.padL + props.padR)
-                       .attr("class", "svg-default");
+              div.append("div").attr("class", "plot-title");
+
+              div.select(".plot-title").append("div").attr("class", "plot-title-value");
+              div.select(".plot-title").append("div").attr("class", "plot-title-units").text( props.units[field] );
+
+              svg = div.append("div").attr("class", "line-plot").append("svg");
+
+              svg.attr("height", props.linePlotHeight + props.padB + props.padB)
+                 .attr("width", props.linePlotWidth + props.padL + props.padR)
+                 .attr("class", "svg-default");
 
               svg.append("defs").append("clipPath")
                   .attr("id", "clip")
                   .append("rect")
-                  .attr("width", props.plotWidth)
-                  .attr("height", props.plotHeight);
+                  .attr("width", props.linePlotWidth)
+                  .attr("height", props.linePlotHeight);
 
-              var plot = svg.append("g")
-                               .attr("transform", "translate(" + props.padL + "," + props.padT + ")");
+              var plot = svg.append("g").attr("transform", "translate(" + props.padL + "," + props.padT + ")");
 
-              plot.append("g")
-                 .attr("class", "axis")
-                 .attr("id", "y-axis");
-
-              // y axis label 
-              // svg.append("text")
-              //    .attr("class", "axis-label")
-              //    .attr("id", "y-axis-label")
-              //    .attr("text-anchor", "center")
-              //    .attr("y", 10)
-              //    .attr("x", -props.plotHeight/2 - 20)
-              //    .attr("transform", "rotate(-90)")
-              //    .text("left axis");
+              plot.append("g").attr("class", "axis").attr("id", "y-axis");
 
               plot.append("path").attr("class", "line-plot-path").attr("id", "y-axis-path");
+              plot.append("path").attr("class", "line-plot-path").attr("id", "mean-path");
               plot.append("path").attr("class", "mouse-position-path");
-
-              // YScale.domain( [ d3.min(rideData, function(d) { return d[field]; }),
-              //                  d3.max(rideData, function(d) { return d[field]; })]);
-
             }
 
-            XScale.domain(XDomain.length ? XDomain : [0, rideData[N-1].sec]);
-
+            XDomain = XDomain.length ? XDomain : [0, rideData[N-1].sec];
+            XScale.domain(XDomain);
             YScale.domain( props.YAxisRanges[field] );
-          
+
+            mean = calcMeanOverDomain(rideData, field, XDomain);
+              
+            meanLineData = [ { "x": XScale.range()[0], "y": YScale(mean) },
+                             { "x": XScale.range()[1], "y": YScale(mean) } ];
+
+            YAxis.tickValues(props.YAxisRanges[field].concat(mean));
+
             line.y(function(d) { return YScale(d[field]); });
 
             svg.select("#y-axis").call(YAxis);
@@ -447,21 +486,25 @@ function loadRide(csv){
                 .attr("stroke-width", 1)
                 .attr("fill", "none");
 
+            svg.select("#mean-path")
+                .attr("d", function(d) { return meanLine(meanLineData); })
+                .attr("stroke", props.plotColors[field])
+                .style("stroke-dasharray", "3,3")
+                .attr("stroke-width", 1)
+                .attr("fill", "none");
+
             svg.on("mousemove", mousemove);
 
 
             function mousemove(d, i) {
 
-              var mousePos = d3.mouse(this);
-              var divID = d3.select(this.parentNode).attr("id");
-
+              var mousePos  = d3.mouse(this);
+              var divID     = d3.select(this.parentNode).attr("id");
               var mouseXPos = mousePos[0] - props.padL;
 
               dists = [];
-
               for (i = 0; i < rideData.length; i++) {
-
-                dists.push( Math.pow(mouseXPos - XScale(rideData[i].sec), 2) );
+                dists.push( Math.abs(mouseXPos - XScale(rideData[i].sec)) );
               }
 
               mousePositionIndex = dists.indexOf(Math.min.apply(Math, dists));
@@ -471,50 +514,32 @@ function loadRide(csv){
               var lineData = [ { "x": XScale(rideData[mousePositionIndex].sec), "y": YScale.range()[0] },
                                { "x": XScale(rideData[mousePositionIndex].sec), "y": YScale.range()[1] } ];
 
-              // d3.select(this).select(".mouse-position-path").attr("d", mouseLine(lineData));
-
               d3.selectAll(".mouse-position-path").attr("d", mouseLine(lineData));
 
-              // copied from make2DPlot for now:
-              var XScale2D = d3.scale.linear()
-                             .range( [0, props.plotWidth])
-                             .domain(props.YAxisRanges.hrt);
+              // Draw trailing path on scatter plots
+              // var XScale2D = d3.scale.linear().range( [0, props.linePlotWidth]).domain(props.YAxisRanges.hrt);
+              // var YScale2D = d3.scale.linear().domain(props.YAxisRanges.pwr).range([props.linePlotHeight, 0]);
 
-              var YScale2D = d3.scale.linear()
-                             .domain(props.YAxisRanges.pwr)
-                             .range([props.plotHeight, 0]);
+              // var trailingPath = d3.svg.line().x( function(d) {return XScale2D(d.hrt); })
+              //                                 .y( function(d) {return YScale2D(d.pwr); }).interpolate("linear");
 
-              var trailingPath = d3.svg.line().x( function(d) {return XScale2D(d.hrt); })
-                                              .y( function(d) {return YScale2D(d.pwr); }).interpolate("linear");
-
-              var trailingPathData = rideData.slice(mousePositionIndex < 10 ? mousePositionIndex : mousePositionIndex - 10, mousePositionIndex);
+              // var trailingPathData = rideData.slice(mousePositionIndex < 10 ? mousePositionIndex : mousePositionIndex - 10, mousePositionIndex);
               
-              d3.select("#plot-2d").select("#trailing-mouse-path")
-                                   .attr("d", trailingPath(trailingPathData))
-                                   .style("stroke", function(d, i) {return d3.rgb(255*i/10, 255*i/10, 255*i/10);});
-
-
               // d3.select("#plot-2d").select("#trailing-mouse-path")
-              //                      .data(trailingPathData)
-              //                      .enter().append("path")
-              //                      .attr("d", trailingPath)
-              //                      .style("fill", function(d, i) {return d3.rgb(255*i/10, 255*i/10, 255*i/10);})
+              //                      .attr("d", trailingPath(trailingPathData))
               //                      .style("stroke", function(d, i) {return d3.rgb(255*i/10, 255*i/10, 255*i/10);});
-
 
               mouseMarker.setLatLng([ +rideData[mousePositionIndex].lat, +rideData[mousePositionIndex].lon ]);
               mouseMarker.setRadius(  +rideData[mousePositionIndex].alt/100 );
 
+              d3.selectAll(".line-plot-container")
+                .select(".plot-title-value").text( function (d) { return rideData[mousePositionIndex][d.field()].toFixed(0); });
+
               d3.select("#alt-title").text(rideData[mousePositionIndex].alt.toFixed(0));
-              d3.select("#spd-title").text(rideData[mousePositionIndex].spd.toFixed(2));
-              d3.select("#pwr-title").text(rideData[mousePositionIndex].pwr.toFixed(0));
-              d3.select("#hrt-title").text(rideData[mousePositionIndex].hrt.toFixed(0));
-              d3.select("#cad-title").text(rideData[mousePositionIndex].cad.toFixed(0));
-              d3.select("#vam-title").text(rideData[mousePositionIndex].vam.toFixed(0));
-            }
 
-          }
+            } // mousemove
 
+          } // linePlot
 
           linePlot.field = function(val) {
             if (!arguments.length) return field;
@@ -535,104 +560,108 @@ function loadRide(csv){
           }
 
           return linePlot;
-        }
+        } //makeLinePlot
 
 
-        function make2DPlot(rideData) {
+        function makeScatterPlot() {
 
-          props.padB = 20;
-          props.plotHeight = 300;
-          props.plotWidth  = 400;
+          props = definePlotProps();
 
-          var div = d3.select("#plot-2d")
-                  .attr("height", props.plotHeight + props.padB + props.padB)
-                  .attr("width",  props.plotWidth + props.padL + props.padR);
+          var field;
 
-          var svg = div.select("svg");
-          var firstCall = 0;
+          var XScale = d3.scale.linear().range( [0, props.scatterPlot.width] );
+          var YScale = d3.scale.linear().range( [props.scatterPlot.height, 0] );
 
-          if (svg.empty()) { firstCall = 1; }
-
-          if (firstCall) {
-            svg = div.append("svg")
-                .attr("height", props.plotHeight + props.padB + props.padB)
-                .attr("width", props.plotWidth + props.padL + props.padR)
-                .attr("class", "svg-default");
-
-            var plot2D = svg.append("g")
-                               .attr("transform", "translate(" + props.padL + "," + props.padT + ")");
-
-            plot2D.append("g")
-                .attr("class", "axis")
-                .attr("id", "x-axis")
-                .attr("transform", "translate(0," + (props.plotHeight) + ")");
-
-            plot2D.append("g")
-                 .attr("class", "axis")
-                 .attr("id", "y-axis");
-
-            plot2D.append("path").attr("id", "trailing-mouse-path")
-                                 .style("fill", "none")
-                                 .style("stroke", "#333")
-                                 .style("stroke-width", "2");
-
-
-          plot2D.append("text")
-            .attr("class", "axis-label")
-            .attr("id", "x-axis-label")
-            .attr("text-anchor", "center")
-            .attr("x", props.plotWidth/2-15)
-            .attr("y", props.plotHeight + props.padB+5)
-            .text("Heart rate (bpm)");
-
-         plot2D.append("text")
-            .attr("class", "axis-label")
-            .attr("id", "y-axis-label")
-            .attr("text-anchor", "center")
-            .attr("x", -props.plotHeight/2 - 15 )
-            .attr("y",  -props.padL - 5)
-            .attr("transform", "rotate(-90)")
-            .text("Power (Watts)");
-              
-          } else {
-            var plot2D = svg.select("g");
-          }
-
-          var XScale = d3.scale.linear()
-                         .range( [0, props.plotWidth])
-                         .domain(props.YAxisRanges.hrt);
-
-          var YScale = d3.scale.linear()
-                         .domain(props.YAxisRanges.pwr)
-                         .range([props.plotHeight, 0]);
-
-          var color = d3.scale.linear().domain(props.YAxisRanges.spd)
-                                        .range(["steelblue", "red"]);
+          var color = d3.scale.linear().domain(props.YAxisRanges.spd).range(["steelblue", "red"]);
 
           var XAxis  = d3.svg.axis().scale(XScale).orient("bottom");
           var YAxis  = d3.svg.axis().scale(YScale).orient("left");
 
-          plot2D.select("#x-axis").call(XAxis);
-          plot2D.select("#y-axis").call(YAxis);
+          function scatterPlot(div) {
 
-          nSec = rideData[rideData.length-1].sec;
+            var svg = div.select("svg");
+            var firstCall = 0;
 
-          plot2D.selectAll(".scatter-plot-dot")
-                .data(rideData)
-                .enter().append("circle")
-                .attr("class", "scatter-plot-dot")
-                .attr("r", 3)
-                .attr("cx", function(d){ return XScale(d.hrt); })
-                .attr("cy", function(d){ return YScale(d.pwr); })
-                .style("fill", function(d){ return color(d.spd); })
-                .style("fill-opacity", ".7");
+            if (field[0].length==0) {return;}
 
+            if (svg.empty()) { firstCall = 1; }
 
+            if (firstCall) {
+              svg = div.append("svg")
+                  .attr("height", props.scatterPlot.height + props.scatterPlot.padB + props.scatterPlot.padB)
+                  .attr("width",  props.scatterPlot.width + props.scatterPlot.padL + props.scatterPlot.padR)
+                  .attr("class", "svg-default");
+
+              var plot2D = svg.append("g").attr("transform", "translate(" + props.scatterPlot.padL + "," + props.scatterPlot.padT + ")");
+
+              plot2D.append("g")
+                  .attr("class", "axis")
+                  .attr("id", "x-axis")
+                  .attr("transform", "translate(0," + (props.scatterPlot.height) + ")");
+
+              plot2D.append("g").attr("class", "axis").attr("id", "y-axis");
+
+              plot2D.append("path").attr("id", "trailing-mouse-path")
+                                   .style("fill", "none")
+                                   .style("stroke", "#333")
+                                   .style("stroke-width", "2");
+
+            plot2D.append("text")
+              .attr("class", "axis-label")
+              .attr("id", "x-axis-label")
+              .attr("text-anchor", "center")
+              .attr("x", props.scatterPlot.width/2-15)
+              .attr("y", props.scatterPlot.height + props.scatterPlot.padB)
+              .text(props.units[field[0]]);
+
+           plot2D.append("text")
+              .attr("class", "axis-label")
+              .attr("id", "y-axis-label")
+              .attr("text-anchor", "center")
+              .attr("x", -props.scatterPlot.height/2 - 15 )
+              .attr("y",  -props.scatterPlot.padL )
+              .attr("transform", "rotate(-90)")
+              .text(props.units[field[1]]);
+                
+            } else {
+              var plot2D = svg.select("g");
+            }
+
+            XScale.domain(props.YAxisRanges[field[0]]);
+            YScale.domain(props.YAxisRanges[field[1]]);
+
+            plot2D.select("#x-axis").call(XAxis);
+            plot2D.select("#y-axis").call(YAxis);
+
+            nSec = rideData[rideData.length-1].sec;
+
+            plot2D.selectAll(".scatter-plot-dot")
+                  .data(rideData)
+                  .enter().append("circle")
+                  .attr("class", "scatter-plot-dot")
+                  .attr("r", 3)
+                  .attr("cx", function(d){ return XScale(d[field[0]]); })
+                  .attr("cy", function(d){ return YScale(d[field[1]]); })
+                  .style("fill", function(d){ return color(d.spd); })
+                  .style("fill-opacity", function(d) { 
+                    var showPointFlag = 1;
+                    if (d[field[0]] < props.YAxisRanges[field[0]][0]) { showPointFlag = 0;}
+                    if (d[field[1]] < props.YAxisRanges[field[1]][0]) { showPointFlag = 0;}
+                    return showPointFlag ? "0.3" : "0.0";
+                   });
+
+        } //scatterPlot   
+
+        scatterPlot.field = function(val) {
+          if (!arguments.length) return field;
+            field = val;
+            return scatterPlot;
         }
 
 
-        
-}
+        return scatterPlot;
+
+      } // makeScatterPlot
 
         function loadButtons(rideData, props) {
 
@@ -673,11 +702,12 @@ function loadRide(csv){
 
             var YAxisRanges = {
               spd: [0, 40], 
-              pwr: [0, 420],
+              pwr: [25, 420],
               hrt: [80, 185],
               cad: [40, 100],
-              vam: [0, 1600],
-            };
+              vam: [-4000, 2000],
+              slp: [-10, 10],
+            }
 
             var plotColors = {
               spd: "rgb(30, 190, 30)",
@@ -685,20 +715,42 @@ function loadRide(csv){
               hrt: "rgb(30, 80, 200)",
               cad: "rgb(220, 20, 190)",
               vam: "rgb(80, 80, 80)",
-            };
+              slp: "rgb(30, 30, 30)",
+            }
+
+            var units = {
+              spd: "mph",
+              pwr: "watts",
+              hrt: "bpm",
+              cad: "rpm",
+              vam: "VAM",
+              slp: "slope",
+            }
+
+            var scatterPlotProps = {
+              padL: 40,
+              padR: 10,
+              padT: 20,
+              padB: 30,
+              height: 200,
+              width: 200,
+            }
 
             var props = {
-                padL: 35, padR: 10,
-                padT: 10, padB: 10,
-                plotWidth:  500, 
-                plotHeight: 50,
-                xAxIsTimeFlag: 0,
-                doSmoothingFlag: 0,
-                plotPwr: 0,
-                plotCad: 0,
+                padL: 35, padR: 5,
+                padT: 5,  padB: 5,
+                
+                linePlotWidth:     500, 
+                linePlotHeight:    50,
+                xAxIsTimeFlag:     0,
+                doSmoothingFlag:   0,
+
                 YAxisRanges: YAxisRanges,
-                plotColors: plotColors,
-            };
+                plotColors:  plotColors,
+                units:       units,
+                scatterPlot: scatterPlotProps,
+            }
 
             return props;
         }
+

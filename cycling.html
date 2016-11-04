@@ -24,8 +24,10 @@
 
       <div id="main-container" style="width:1200px; padding-left: 30px;">
 
+ 		<!-- LEFT PANEL -->
         <div id="left-container" style="width:300px; margin-left: 10px;">
-
+ 		
+ 			<!-- statistics -->
             <div id="info" style="width: 300px; height: 170px; margin-top: 5px;">
               <div style="width: 250px;">
                 <p>Hints:<br>
@@ -40,6 +42,7 @@
                 </table><br><br>
             </div>
 
+ 			<!-- buttons/form -->
             <div id="buttons" style="width: 100px;">
 
                 <button id="button-x-axis">Toggle x-axis</button>
@@ -53,64 +56,34 @@
 
                 <button id="button-smoothing"> Smooth </button>
                 <div class="button-spacer" style="height: 20px;"></div>
-
             </div>
 
+ 			<!-- Map -->
             <div id="ride-map" style="width: 270px; height: 230px;"></div>
 
-        </div>
- 
-        <div id="plot-container" style="width: 800px;">
+        </div><!--- end main container -->
 
+ 		<!-- RIGHT PANEL -->
+
+ 		<!-- alt plot (hard-coded) -->
+        <div id="alt-plot-container" style="width: 800px;">
             <div class="plot-title">
               <div id="alt-title" class="plot-title-value"></div>
               <div class="plot-title-units">feet</div>
             </div>
             <div id="alt-plot"></div> 
             <div class="spacer"></div>
-
-            <div class="plot-title">
-              <div id="spd-title" class="plot-title-value"></div>
-              <div class="plot-title-units">mph</div>
-            </div>
-            <div id="spd-plot" class="line-plot"></div>
-            <div class="spacer"></div>    
-
-            <div class="plot-title">
-              <div id="pwr-title" class="plot-title-value"></div>
-              <div class="plot-title-units">watts</div>
-            </div>
-            <div id="pwr-plot" class="line-plot"></div>
-            <div class="spacer"></div>
-
-            <div class="plot-title">
-              <div id="hrt-title" class="plot-title-value"></div>
-              <div class="plot-title-units">bpm</div>
-            </div>
-            <div id="hrt-plot" class="line-plot"></div>
-            <div class="spacer"></div>
-
-            <div class="plot-title">
-              <div id="cad-title" class="plot-title-value"></div>
-              <div class="plot-title-units">rpm</div>
-            </div>
-            <div id="cad-plot" class="line-plot"></div>
-            <div class="spacer"></div>
-
-            <div class="plot-title">
-              <div id="vam-title" class="plot-title-value"></div>
-              <div class="plot-title-units">VAM</div>
-            </div>
-            <div id="vam-plot" class="line-plot"></div>
-            <div class="spacer"></div>
-
-            <div style="height: 20px; width: 100%;"></div>
-
-            <div class="plot-title"></div>
-            <div id="plot-2d" class="scatter-plot"></div>
-            <div class="spacer"></div>
-
         </div>
+
+ 		<!-- line plots -->
+        <div id="plots-1d-container" style="width: 800px;"></div>
+        <div style="height: 20px; width: 100%;"></div>
+
+        <!-- 2D plots -->
+        <div id="plots-2d-container" style="width: 800px;"></div>
+
+        <div class="spacer"></div>
+
       </div>
 
       <div style="clear: both;"></div>
